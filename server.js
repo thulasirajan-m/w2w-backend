@@ -12,7 +12,7 @@ app.use(express.json());
 // --- MACHI: CORS FIX ---
 // Frontend URL-ah correct-ah kuduthutta dhaan Login/Register work aagum
 app.use(cors({
-  origin: "https://w2w-frontend-delta.vercel.app", 
+  origin: "https://w2w-frontend-delta.vercel.app", // <--- Indha link correct-ah paaru
   credentials: true
 }));
 
@@ -58,4 +58,3 @@ app.listen(PORT, () => {
   console.log(`🚀 SERVER RUNNING ON PORT: ${PORT}`);
   console.log(`-----------------------------------`);
 });
-  
