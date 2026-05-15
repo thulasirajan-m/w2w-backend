@@ -3,24 +3,22 @@ const nodemailer = require('nodemailer');
 const sendEmail = async (to, subject, text) => {
   try {
     const transporter = nodemailer.createTransport({
-      // MACHI: Directly using the host with Port 587 and opportunistic TLS
+      // MACHI: Directly targeting IPv4 for Gmail SMTP
       host: 'smtp.gmail.com',
       port: 587,
-      secure: false, // 587 must be false
+      secure: false, // Port 587-ku idhu false dhaan
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
       },
-      // --- THE ULTIMATE STABILITY SETTINGS ---
-      connectionTimeout: 20000, // 20 seconds
-      greetingTimeout: 20000,
-      socketTimeout: 20000,
-      debug: true, // Enable logs in Render for deeper debugging
-      logger: true, 
+      // --- THE "STAY ALIVE" CONFIGURATION ---
+      connectionTimeout: 30000, // 30 seconds (Max wait)
+      greetingTimeout: 30000,
+      socketTimeout: 30000,
       tls: {
-        // Idhu dhaan 'ENETUNREACH' and 'Timeout' errors-ah handle pannum
         rejectUnauthorized: false,
-        minVersion: 'TLSv1.2'
+        // Sila Cloud platforms-la idhu ramba mukkiyam
+        servername: 'smtp.gmail.com'
       }
     });
 
@@ -31,14 +29,11 @@ const sendEmail = async (to, subject, text) => {
       text: text
     };
 
-    // Verify connection before sending
-    await transporter.verify();
-    console.log(" SMTP Server is ready! ✅");
-
+    // Send it!
     await transporter.sendMail(mailOptions); 
     console.log(`Email sent to ${to} successfully! ✅`);
   } catch (err) {
-    console.error("Email Error Details:", err.message);
+    console.error("Machi, Email Error Details:", err.message);
     throw err; 
   }
 };
