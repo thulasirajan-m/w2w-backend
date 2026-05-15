@@ -8,8 +8,7 @@ router.post('/', async (req, res) => {
   try {
     const { name, email, subject, message } = req.body;
 
-    // 1. Save to MongoDB
-    // Note: 'isReplied' will be false by default as per our model
+    // 1. Save to MongoDB First (Idhu dhaan ramba mukkiyam)
     const newContact = new Contact({ 
       name, 
       email, 
@@ -18,22 +17,25 @@ router.post('/', async (req, res) => {
     });
     await newContact.save();
 
-    // 2. Transporter Setup - Using .env for security
+    // 2. Transporter Setup - Using stable settings for Render
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false, 
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
       },
+      connectionTimeout: 10000, // 10 seconds
       tls: {
-        rejectUnauthorized: false // Localhost TLS handshake fix
+        rejectUnauthorized: false
       }
     });
 
     // 3. Mail Options Setup
     const mailOptions = {
       from: `"W2W Support" <${process.env.EMAIL_USER}>`,
-      to: process.env.EMAIL_USER, // Admin (Ungalukku) mail varum
+      to: process.env.EMAIL_USER, 
       replyTo: email, 
       subject: `W2W Inquiry: ${subject || "New Doubt"}`,
       html: `
@@ -49,21 +51,25 @@ router.post('/', async (req, res) => {
           <div style="background: #f9fafb; padding: 15px; border-radius: 10px; border-left: 6px solid #16a34a; font-style: italic; color: #4b5563;">
             "${message}"
           </div>
-          <p style="font-size: 11px; color: #9ca3af; margin-top: 30px; text-align: center;">
-            This message was securely delivered via W2W Waste-to-Worth Contact Portal.
-          </p>
         </div>
       `
     };
 
-    // 4. Send Execution
-    await transporter.sendMail(mailOptions);
+    // 4. Send Execution with Smart Bypass
+    try {
+      // Machi, mail fail aanaalum catch block-ku pōidum, database save aனadhunala success varum
+      await transporter.sendMail(mailOptions);
+      console.log("Contact Email sent successfully! ✅");
+    } catch (mailErr) {
+      console.error("MACHI CONTACT MAIL ERROR (Saved in DB though):", mailErr.message);
+      // We don't send 500 error here so the user sees success
+    }
 
-    res.status(201).json({ msg: "Success! Mail sented✅" });
+    res.status(201).json({ msg: "Success! Query received ✅" });
 
   } catch (err) {
-    console.error("MACHI BACKEND ERROR:", err.message);
-    res.status(500).json({ error: "Mail Cannot Send please check the terminal." });
+    console.error("MACHI DATABASE ERROR:", err.message);
+    res.status(500).json({ error: "System Error: Could not save message." });
   }
 });
 
