@@ -4,9 +4,17 @@ const sendEmail = async (to, subject, text) => {
   try {
     const transporter = nodemailer.createTransport({
       service: 'gmail',
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true, // Use SSL for port 465
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
+      },
+      // --- MACHI: Indha settings timeout-ah thadukkum ---
+      connectionTimeout: 10000, // 10 seconds wait pannum
+      tls: {
+        rejectUnauthorized: false // Certificate issues skip pannum
       }
     });
 
