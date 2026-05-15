@@ -22,12 +22,13 @@ router.post('/register', async (req, res) => {
     const subject = "Welcome to the W2W Family! 🌍♻️";
     const message = `Hello ${name},\n\nThank you for joining the Waste to Worth (W2W) community! Your account has been successfully created. Together, we can work towards a cleaner and more sustainable world. Happy Recycling!`;
     
-    sendEmail(email, subject, message).catch(err => console.log("Welcome mail error:", err));
+    // Machi: .catch pōtta dhaan register crash aagaadhu
+    sendEmail(email, subject, message).catch(err => console.log("Register mail error:", err.message));
 
     res.json({ msg: "User Registered Successfully ✅" });
   } catch (err) {
     console.error(err.message);
-    res.status(500).send("Server Error");
+    res.status(500).json({ msg: "Server Error during registration" });
   }
 });
 
@@ -44,7 +45,8 @@ router.post('/login', async (req, res) => {
     const subject = "Security Alert: Successful Login on W2W 🛡️";
     const message = `Hello ${user.name},\n\nYou Just Logged In to Your W2W Account.\nTime: ${new Date().toLocaleString()}\nEmail: ${email}\n\nIf this wasn't you, please secure your account! ♻️`;
     
-    sendEmail(email, subject, message).catch(err => console.log("Login mail error:", err));
+    // Login mail fail aanaalum process continue aagum
+    sendEmail(email, subject, message).catch(err => console.log("Login mail error:", err.message));
 
     const secret = process.env.JWT_SECRET || 'w2w_secret_key_123'; 
     const token = jwt.sign({ id: user._id }, secret, { expiresIn: '24h' });
@@ -55,7 +57,7 @@ router.post('/login', async (req, res) => {
     });
   } catch (err) {
     console.error(err.message);
-    res.status(500).send("Server Error");
+    res.status(500).json({ msg: "Server Error during login" });
   }
 });
 
@@ -66,36 +68,34 @@ router.post('/forgot-password', async (req, res) => {
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) return res.status(404).json({ msg: "User not found! ❌" });
 
-    // Generate 6 digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     
-    // Save OTP & Expiry in DB
     user.resetPasswordToken = otp;
-    user.resetPasswordExpires = Date.now() + 600000; // 10 Minutes Expiry
+    user.resetPasswordExpires = Date.now() + 600000; // 10 mins
     await user.save();
 
     const subject = "W2W: Password Reset OTP 🔑";
-    const message = `Machi, unga password reset OTP idhu dhaan: ${otp}`;
+    const message = `Hello ${user.name},\n\nYour password reset OTP is: ${otp}\n\nThis OTP will expire in 10 minutes.`;
     
     try {
-      // Trying to send email
       await sendEmail(email, subject, message);
       res.json({ msg: "OTP sent to your email! Check inbox ✅" });
     } catch (mailError) {
-      // IF MAIL FAILS: We don't crash. We log it and tell the user it's generated.
+      // IF MAIL SERVICE FAILS (Timeout / ENETUNREACH)
       console.log("-----------------------------------------");
-      console.log(`MACHI OTP GENERATED FOR ${email}: ${otp}`);
+      console.log(`OTP GENERATED FOR ${email}: ${otp}`);
       console.log("-----------------------------------------");
       
+      // Ippo load aagaadhu, udanae success alert vandhudum
       res.json({ 
-        msg: "OTP generated successfully! (Check Render Logs for OTP if mail fails) ✅",
-        debugOtp: otp // Strictly for your testing machi
+        msg: "OTP generated! Check Render Logs if mail doesn't arrive ✅",
+        debugOtp: otp 
       });
     }
 
   } catch (err) {
-    console.error("Forgot Password Logic Error:", err.message);
-    res.status(500).json({ msg: "Something went wrong! ❌" });
+    console.error("Forgot Pass Error:", err.message);
+    res.status(500).json({ msg: "System Error. Please try again!" });
   }
 });
 
@@ -118,21 +118,22 @@ router.post('/reset-password', async (req, res) => {
     user.resetPasswordExpires = undefined;
     await user.save();
 
-    res.json({ msg: "Password updated successfully! Login with new password ✅" });
+    res.json({ msg: "Password updated successfully! ✅" });
   } catch (err) {
     console.error(err.message);
-    res.status(500).send("Server Error");
+    res.status(500).json({ msg: "Error resetting password" });
   }
 });
 
 // --- Get User Profile ---
 router.get('/profile', async (req, res) => {
   try {
+    // Note: 'auth' middleware use pannaal mattum dhaan req.user work aagum
     if(!req.user) return res.status(401).json({msg: "No token, authorization denied"});
     const user = await User.findById(req.user.id).select('-password');
     res.json(user);
   } catch (err) {
-    res.status(500).send('Server Error!');
+    res.status(500).json({ msg: "Server Error fetching profile" });
   }
 });
 
