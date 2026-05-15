@@ -14,13 +14,11 @@ router.post('/register', async (req, res) => {
 
     user = new User({ name, email, password });
 
-    // Password Hashing
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(password, salt);
 
     await user.save();
 
-    // Welcome Mail
     const subject = "Welcome to the W2W Family! 🌍♻️";
     const message = `Hello ${name},\n\nThank you for joining the Waste to Worth (W2W) community! Your account has been successfully created. Together, we can work towards a cleaner and more sustainable world. Happy Recycling!`;
     
@@ -37,21 +35,17 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
   try {
-    // 1. User-ah kandupudikkirom (Lowercase email use pannunga for safety)
     let user = await User.findOne({ email: email.toLowerCase() });
     if (!user) return res.status(400).json({ msg: "Invalid Credentials - Email not found" });
 
-    // 2. Password Compare pannuvom
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ msg: "Wrong password machi!" });
+    if (!isMatch) return res.status(400).json({ msg: "Wrong password!" });
 
-    // 3. Security Alert Mail
     const subject = "Security Alert: Successful Login on W2W 🛡️";
     const message = `Hello ${user.name},\n\nYou Just Logged In to Your W2W Account.\nTime: ${new Date().toLocaleString()}\nEmail: ${email}\n\nIf this wasn't you, please secure your account! ♻️`;
     
     sendEmail(email, subject, message).catch(err => console.log("Login mail error:", err));
 
-    // 4. JWT Token (Check if JWT_SECRET exists in .env)
     const secret = process.env.JWT_SECRET || 'w2w_secret_key_123'; 
     const token = jwt.sign({ id: user._id }, secret, { expiresIn: '24h' });
 
@@ -65,10 +59,63 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// --- FORGOT PASSWORD (REQUEST OTP) ---
+router.post('/forgot-password', async (req, res) => {
+  const { email } = req.body;
+  try {
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) return res.status(404).json({ msg: "User not found! ❌" });
+
+    // Generate 6 digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    // Save OTP & Expiry in DB
+    user.resetPasswordToken = otp;
+    user.resetPasswordExpires = Date.now() + 600000; // 10 Minutes Expiry
+    await user.save();
+
+    const subject = "W2W: Password Reset OTP 🔑";
+    const message = `Machi, unga password reset OTP idhu dhaan: ${otp}\n\nIndha OTP 10 mins-la expire aayidum. Adhukulla use panniru!`;
+    
+    await sendEmail(email, subject, message);
+    res.json({ msg: "OTP sent to your email! Check inbox ✅" });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+
+// --- RESET PASSWORD (VERIFY OTP & UPDATE) ---
+router.post('/reset-password', async (req, res) => {
+  const { email, otp, newPassword } = req.body;
+  try {
+    const user = await User.findOne({ 
+      email: email.toLowerCase(),
+      resetPasswordToken: otp,
+      resetPasswordExpires: { $gt: Date.now() } 
+    });
+
+    if (!user) return res.status(400).json({ msg: "Invalid or Expired OTP! ❌" });
+
+    // Hash New Password
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+
+    // Clear OTP fields
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    res.json({ msg: "Password updated successfully! Login with new password ✅" });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+
 // --- Get User Profile ---
 router.get('/profile', async (req, res) => {
   try {
-    // Inga middleware (auth) irukkanum, illana req.user.id work aagadhu
     if(!req.user) return res.status(401).json({msg: "No token, authorization denied"});
     const user = await User.findById(req.user.id).select('-password');
     res.json(user);

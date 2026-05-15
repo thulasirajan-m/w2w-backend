@@ -5,6 +5,11 @@ const UserSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   isAdmin: { type: Boolean, default: false },
+  
+  // --- MACHI: FORGOT PASSWORD FIELDS ---
+  resetPasswordToken: { type: String },
+  resetPasswordExpires: { type: Date },
+  
   date: { type: Date, default: Date.now }
 });
 
