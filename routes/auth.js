@@ -59,7 +59,7 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// --- FORGOT PASSWORD (REQUEST OTP) ---
+// --- FORGOT PASSWORD (SMART BYPASS UPDATE) ---
 router.post('/forgot-password', async (req, res) => {
   const { email } = req.body;
   try {
@@ -75,21 +75,27 @@ router.post('/forgot-password', async (req, res) => {
     await user.save();
 
     const subject = "W2W: Password Reset OTP 🔑";
-    const message = `Machi, unga password reset OTP idhu dhaan: ${otp}\n\nIndha OTP 10 mins-la expire aayidum. Adhukulla use panniru!`;
+    const message = `Machi, unga password reset OTP idhu dhaan: ${otp}`;
     
-    // MACHI: Try-catch around sendEmail to prevent 500 crash
     try {
+      // Trying to send email
       await sendEmail(email, subject, message);
       res.json({ msg: "OTP sent to your email! Check inbox ✅" });
     } catch (mailError) {
-      console.error("Nodemailer Mail Error:", mailError.message);
-      // Even if mail fails, we send 500 with a specific message to check Render logs
-      res.status(500).json({ msg: "Mail service failed. Check Render Environment Variables!" });
+      // IF MAIL FAILS: We don't crash. We log it and tell the user it's generated.
+      console.log("-----------------------------------------");
+      console.log(`MACHI OTP GENERATED FOR ${email}: ${otp}`);
+      console.log("-----------------------------------------");
+      
+      res.json({ 
+        msg: "OTP generated successfully! (Check Render Logs for OTP if mail fails) ✅",
+        debugOtp: otp // Strictly for your testing machi
+      });
     }
 
   } catch (err) {
     console.error("Forgot Password Logic Error:", err.message);
-    res.status(500).send("Server Error");
+    res.status(500).json({ msg: "Something went wrong! ❌" });
   }
 });
 
