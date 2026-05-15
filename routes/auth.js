@@ -77,10 +77,18 @@ router.post('/forgot-password', async (req, res) => {
     const subject = "W2W: Password Reset OTP 🔑";
     const message = `Machi, unga password reset OTP idhu dhaan: ${otp}\n\nIndha OTP 10 mins-la expire aayidum. Adhukulla use panniru!`;
     
-    await sendEmail(email, subject, message);
-    res.json({ msg: "OTP sent to your email! Check inbox ✅" });
+    // MACHI: Try-catch around sendEmail to prevent 500 crash
+    try {
+      await sendEmail(email, subject, message);
+      res.json({ msg: "OTP sent to your email! Check inbox ✅" });
+    } catch (mailError) {
+      console.error("Nodemailer Mail Error:", mailError.message);
+      // Even if mail fails, we send 500 with a specific message to check Render logs
+      res.status(500).json({ msg: "Mail service failed. Check Render Environment Variables!" });
+    }
+
   } catch (err) {
-    console.error(err.message);
+    console.error("Forgot Password Logic Error:", err.message);
     res.status(500).send("Server Error");
   }
 });
@@ -97,11 +105,9 @@ router.post('/reset-password', async (req, res) => {
 
     if (!user) return res.status(400).json({ msg: "Invalid or Expired OTP! ❌" });
 
-    // Hash New Password
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(newPassword, salt);
 
-    // Clear OTP fields
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
     await user.save();
