@@ -73,7 +73,7 @@ router.get('/profile', async (req, res) => {
     const user = await User.findById(req.user.id).select('-password');
     res.json(user);
   } catch (err) {
-    res.status(500).send('Server Error machi!');
+    res.status(500).send('Server Error!');
   }
 });
 

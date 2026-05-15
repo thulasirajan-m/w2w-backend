@@ -20,7 +20,7 @@ app.use(cors({
 const orderCreationLimiter = rateLimit({
   windowMs: 10 * 60 * 1000, 
   max: 15, 
-  message: { error: "Too many requests machi! Konja neram kazhichi vaa." }
+  message: { error: "Too many requests! Try again later." }
 });
 
 // --- Database Connection ---

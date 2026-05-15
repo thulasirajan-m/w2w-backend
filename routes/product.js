@@ -14,7 +14,7 @@ router.get('/', async (req, res) => {
     res.json(products);
   } catch (err) {
     console.error("Fetch Error:", err.message);
-    res.status(500).json({ msg: "Server error machi! Could not fetch products." });
+    res.status(500).json({ msg: "Server error! Could not fetch products." });
   }
 });
 
@@ -27,7 +27,7 @@ router.post('/add', async (req, res) => {
 
     // --- Validation Logic ---
     if (!name || !price || !category || !imageUrl || !description) {
-      return res.status(400).json({ msg: "Machi, all fields are required including description!" });
+      return res.status(400).json({ msg: "all fields are required including description!" });
     }
 
     const newProduct = new Product({
@@ -43,7 +43,7 @@ router.post('/add', async (req, res) => {
     res.status(201).json({ msg: "Product Added Successfully! ✅", product: savedProduct });
   } catch (err) {
     console.error("Add Product Error:", err.message);
-    res.status(500).json({ msg: "Product add panna mudiyala machi! DB connection check pannu." });
+    res.status(500).json({ msg: "Product Cannot be Added! Check DB connection." });
   }
 });
 
@@ -56,7 +56,7 @@ router.get('/:id', async (req, res) => {
     res.json(product);
   } catch (err) {
     console.error("Single Fetch Error:", err.message);
-    res.status(500).json({ msg: "Invalid Product ID machi!" });
+    res.status(500).json({ msg: "Invalid Product ID!" });
   }
 });
 
@@ -71,7 +71,7 @@ router.delete('/:id', async (req, res) => {
     res.json({ msg: "Product deleted successfully! 🗑️" });
   } catch (err) {
     console.error("Delete Error:", err.message);
-    res.status(500).json({ msg: "Delete operation failed machi." });
+    res.status(500).json({ msg: "Delete operation failed." });
   }
 });
 

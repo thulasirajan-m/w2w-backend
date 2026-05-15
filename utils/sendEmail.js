@@ -17,11 +17,11 @@ const sendEmail = async (to, subject, text) => {
       text: text
     };
 
-    await transporter.sendMail(mailOptions); // sendMail-னு இருக்கணும் machi, sendEmail-னு இல்ல!
+    await transporter.sendMail(mailOptions); 
     console.log(`Email sent to ${to} successfully! ✅`);
   } catch (err) {
     console.error("Email error:", err.message);
-    throw err; // Error-ஐ மேல அனுப்பி விடுறோம்
+    throw err; 
   }
 };
 

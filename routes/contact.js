@@ -35,7 +35,7 @@ router.post('/', async (req, res) => {
       from: `"W2W Support" <${process.env.EMAIL_USER}>`,
       to: process.env.EMAIL_USER, // Admin (Ungalukku) mail varum
       replyTo: email, 
-      subject: `W2W Inquiry: ${subject || "New Doubt Machi!"}`,
+      subject: `W2W Inquiry: ${subject || "New Doubt"}`,
       html: `
         <div style="font-family: sans-serif; border: 2px solid #16a34a; padding: 25px; border-radius: 20px; max-width: 600px; margin: auto; background-color: #ffffff;">
           <h2 style="color: #16a34a; border-bottom: 2px solid #16a34a; padding-bottom: 10px;">New W2W Inquiry! ♻️</h2>
@@ -59,11 +59,11 @@ router.post('/', async (req, res) => {
     // 4. Send Execution
     await transporter.sendMail(mailOptions);
 
-    res.status(201).json({ msg: "Success! Mail sent machi ✅" });
+    res.status(201).json({ msg: "Success! Mail sented✅" });
 
   } catch (err) {
     console.error("MACHI BACKEND ERROR:", err.message);
-    res.status(500).json({ error: "Mail anupa mudiyala! Terminal-ah check pannu machi." });
+    res.status(500).json({ error: "Mail Cannot Send please check the terminal." });
   }
 });
 

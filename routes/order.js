@@ -15,7 +15,7 @@ router.get('/admin/all-orders', async (req, res) => {
     res.json(orders);
   } catch (err) {
     console.error("Admin Fetch Error:", err.message);
-    res.status(500).json({ error: "DB-la irundhu data edukka mudiyala machi!" });
+    res.status(500).json({ error: "Cannot Access Data! from the database." });
   }
 });
 
@@ -47,7 +47,7 @@ router.put('/admin/update-status/:id', async (req, res) => {
     const validStatuses = ['Pending Verification', 'Verified', 'On the Way', 'Completed', 'Cancelled'];
     
     if (!validStatuses.includes(status)) {
-      return res.status(400).json({ error: "Invalid status value machi!" });
+      return res.status(400).json({ error: "Invalid status value!" });
     }
 
     const updatedOrder = await Order.findByIdAndUpdate(req.params.id, { status }, { new: true });
