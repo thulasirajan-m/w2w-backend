@@ -71,6 +71,35 @@ Thank you for your contribution to a greener planet! 🌍♻️
   }
 });
 
+// @route   DELETE /api/orders/admin/delete/:id
+// MACHI FIXED: Permanent Purge Engine Integration for Completed Orders
+router.delete('/admin/delete/:id', async (req, res) => {
+  try {
+    const orderId = req.params.id;
+
+    // 1. Storage search verification
+    const targetOrder = await Order.findById(orderId);
+    if (!targetOrder) {
+      return res.status(404).json({ error: "Order record not found in system matrices!" });
+    }
+
+    // 2. Security Check: Block accidental drops of working pending pipelines
+    if (targetOrder.status !== 'Completed') {
+      return res.status(400).json({ error: "Restricted action! Only Completed lifecycles can be purged from database storage." });
+    }
+
+    // 3. Execution flow loop trigger
+    await Order.findByIdAndDelete(orderId);
+    console.log(`Machi, Completed Order ${orderId} successfully purged from storage indices.`);
+    
+    res.json({ msg: "Transaction records successfully dropped and cleaned from server pipeline! ✅" });
+  } catch (err) {
+    console.error("Admin Purge Engine Error:", err.message);
+    res.status(500).json({ error: "Database purge transaction mapping failed." });
+  }
+});
+
+
 // ==========================================
 // 2. USER ROUTES (Prefix: /api/orders)
 // ==========================================
